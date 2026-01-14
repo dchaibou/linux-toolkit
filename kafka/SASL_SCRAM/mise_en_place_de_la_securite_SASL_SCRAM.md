@@ -16,7 +16,7 @@ L'objectif est de sécuriser les échanges entre deux services distincts : un do
 
 ### Authentification : `kafka_server_jaas.conf`
 
-Ce fichier permet au broker de s'identifier lui-même et de gérer les utilisateurs SCRAM au démarrage.
+Ce fichier permet au broker de s'identifier lui-même pour les opérations internes.
 
 ```conf
 KafkaServer {
@@ -28,7 +28,78 @@ KafkaServer {
 
 ```
 
-### Autorisation : `server.properties`
+### Paramètres du Broker : `server.properties`
+
+Voici les réglages clés pour activer la couche de sécurité :
+
+```ini
+# =============================================================================
+#  CONFIGURATION KAFKA KRAFT AVEC SASL SCRAM-SHA-256
+# =============================================================================
+
+############################# Server Basics #############################
+process.roles=broker,controller
+node.id=1
+controller.quorum.voters=1@localhost:9093
+
+############################# Socket Server Settings #############################
+# Liste des listeners
+# 9092 : Communication interne entre brokers (Non sécurisée pour simplifier)
+# 9093 : Quorum des contrôleurs (Non sécurisé)
+# 9094 : Accès client (Sécurisé via SASL SCRAM)
+listeners=PLAINTEXT://:9092,CONTROLLER://:9093,SASL_PLAINTEXT://:9094
+
+# Mapping des protocoles
+# Important : PLAINTEXT doit pointer vers PLAINTEXT pour la com interne
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SASL_PLAINTEXT:SASL_PLAINTEXT
+
+# Listener utilisé pour la communication entre brokers
+inter.broker.listener.name=PLAINTEXT
+
+# Listener utilisé par le contrôleur
+controller.listener.names=CONTROLLER
+
+# Adresse annoncée aux clients
+advertised.listeners=PLAINTEXT://localhost:9092,SASL_PLAINTEXT://localhost:9094
+
+############################# SASL Configuration #############################
+# Activer le mécanisme SCRAM
+sasl.enabled.mechanisms=SCRAM-SHA-256
+
+# Configuration de l'authentification pour le listener SASL_PLAINTEXT
+# Ce bloc définit l'utilisateur "admin" qui permet au broker de s'identifier
+LISTENER.NAME.SASL_PLAINTEXT.SCRAM-SHA-256.SASL.JAAS.CONFIG=org.apache.kafka.common.security.scram.ScramLoginModule required username="admin" password="admin-secret";
+
+# Utilisation de l'Authorizer standard pour KRaft
+authorizer.class.name=org.apache.kafka.metadata.authorizer.StandardAuthorizer
+
+# Définir les super-utilisateurs (ceux qui ont tous les droits)
+super.users=User:admin
+
+allow.everyone.if.no.acl.found=true
+
+############################# Log Basics #############################
+log.dirs=/tmp/kraft-combined-logs
+num.partitions=1
+num.recovery.threads.per.data.dir=1
+
+############################# Internal Topic Settings #############################
+offsets.topic.replication.factor=1
+transaction.state.log.replication.factor=1
+transaction.state.log.min.isr=1
+
+############################# Log Retention Policy #############################
+log.retention.hours=168
+log.segment.bytes=1073741824
+log.retention.check.interval.ms=300000
+
+############################# Network Settings #############################
+num.network.threads=3
+num.io.threads=8
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
+```
 
 Les paramètres critiques pour activer la couche de sécurité sont :
 
@@ -38,7 +109,7 @@ Les paramètres critiques pour activer la couche de sécurité sont :
 
 ---
 
-## 3. Déploiement avec Docker
+## 3. Déploiement avec Docker : `docker-compose.yml`
 
 Le passage à Kafka 4.x nécessite le formatage du stockage KRaft avec un **Cluster ID** unique avant le premier lancement.
 
