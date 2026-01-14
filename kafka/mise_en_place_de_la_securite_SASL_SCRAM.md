@@ -14,7 +14,7 @@ L'objectif est de sécuriser les échanges entre deux services distincts : un do
 
 ## 2. Configuration de la Sécurité
 
-### Authentification : `kafka_server_jaas.conf`
+### Authentification : `config/kafka_server_jaas.conf`
 
 Ce fichier permet au broker de s'identifier lui-même pour les opérations internes.
 
@@ -28,7 +28,7 @@ KafkaServer {
 
 ```
 
-### Paramètres du Broker : `server.properties`
+### Paramètres du Broker : `config/server.properties`
 
 Voici les réglages clés pour activer la couche de sécurité :
 
