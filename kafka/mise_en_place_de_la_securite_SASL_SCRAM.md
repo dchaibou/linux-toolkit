@@ -68,7 +68,7 @@ sasl.enabled.mechanisms=SCRAM-SHA-256
 
 # Configuration de l'authentification pour le listener SASL_PLAINTEXT
 # Ce bloc définit l'utilisateur "admin" qui permet au broker de s'identifier
-LISTENER.NAME.SASL_PLAINTEXT.SCRAM-SHA-256.SASL.JAAS.CONFIG=org.apache.kafka.common.security.scram.ScramLoginModule required username="admin" password="admin-secret";
+LISTENER.NAME.SASL_PLAINTEXT.SCRAM-SHA-256.SASL.JAAS.CONFIG=org.apache.kafka.common.security.scram.ScramLoginModule required username="admin" password="admin-pw";
 
 # Utilisation de l'Authorizer standard pour KRaft
 authorizer.class.name=org.apache.kafka.metadata.authorizer.StandardAuthorizer
