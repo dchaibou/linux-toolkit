@@ -120,25 +120,33 @@ services:
   kafka-auth:
     image: apache/kafka:4.1.0
     container_name: kafka-auth
+
     environment:
       KAFKA_OPTS: "-Djava.security.auth.login.config=/opt/kafka/config/kafka_server_jaas.conf"
+
     volumes:
       - ./config/kafka_server_jaas.conf:/opt/kafka/config/kafka_server_jaas.conf
       - ./config/server.properties:/opt/kafka/config/server.properties
       - ./secrets:/opt/kafka/secrets
+
     ports:
       - "9092:9092"
       - "9094:9094"
+
     command:
       - /bin/bash
       - -c
       - |
+        set -e
+
         if [ ! -f /tmp/kraft-combined-logs/meta.properties ]; then
-          echo "Formatting storage..."
-          KAFKA_CLUSTER_ID=$$(/opt/kafka/bin/kafka-storage.sh random-uuid)
-          /opt/kafka/bin/kafka-storage.sh format -t $$KAFKA_CLUSTER_ID -c /opt/kafka/config/server.properties
+          echo "Formatting Kafka KRaft storage..."
+          KAFKA_CLUSTER_ID=$(/opt/kafka/bin/kafka-storage.sh random-uuid)
+          /opt/kafka/bin/kafka-storage.sh format -t "$KAFKA_CLUSTER_ID" -c /opt/kafka/config/server.properties
         fi
-        /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+
+        exec /opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+
     networks:
       my-network:
         ipv4_address: 172.20.0.61
